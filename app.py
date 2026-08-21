@@ -2,13 +2,12 @@ import streamlit as st
 import requests
 import pypdf
 from io import BytesIO
-import time
 
 # إعدادات الصفحة
 st.set_page_config(page_title="مستعرض ومشارك ملفات PDF", page_icon="📄", layout="wide")
 
-st.title("📄 مستعرض ومشارك ملفات PDF للجميع")
-st.write("يمكنك الآن رفع ملف من جهازك، أو وضع رابط مباشر ليتمكن الذكاء الاصطناعي من قراءته!")
+st.title("📄 مستعرض ومشارك ملفات PDF الذكي والسريع")
+st.write("تم تطوير هذا الموقع ليتعامل مع الملفات الضخمة جداً بسرعة صاروخية دون أي تعليق!")
 
 option = st.radio("اختر طريقة إدخال ملف الـ PDF:", ("وضع رابط مباشر للمشاركة مع الـ AI", "رفع ملف من جهازك (للقراءة الشخصية)"))
 
@@ -24,59 +23,49 @@ if option == "وضع رابط مباشر للمشاركة مع الـ AI":
         st.query_params["pdf_url"] = pdf_url
         st.info(f"🔗 **رابط المشاركة السريع:** انسخ رابط المتصفح الحالي وأرسله لأي ذكاء اصطناعي!")
         try:
-            with st.spinner("جاري الاتصال بالرابط وتحميل الملف..."):
+            with st.spinner("جاري تحميل الملف من الرابط..."):
                 response = requests.get(pdf_url)
                 response.raise_for_status()
                 pdf_file = BytesIO(response.content)
                 source_info = "تم التحميل من الرابط بنجاح!"
         except Exception as e:
-            st.error(f"❌ حدث خطأ أثناء تحميل الرابط. تأكد من أنه رابط مباشر ينتهي بـ .pdf")
+            st.error(f"❌ حدث خطأ أثناء تحميل الرابط.")
 
 else:
     uploaded_file = st.file_uploader("اختر ملف PDF من جهازك:", type=["pdf"])
     if uploaded_file is not None:
         pdf_file = BytesIO(uploaded_file.read())
-        source_info = f"تم رفع الملف من الجهاز بنجاح! اسم الملف: {uploaded_file.name}"
-        st.warning("⚠️ تنبيه: الملف المرفوع من جهازك لا يمكن مشاركته برابط مع الـ AI. للمشاركة، استخدم خيار الرابط المباشر.")
+        source_info = f"تم رفع الملف بنجاح! [{uploaded_file.name}]"
+        st.warning("⚠️ تنبيه: الملف المرفوع من جهازك لا يمكن مشاركته برابط مع الـ AI.")
 
-# معالجة وقراءة الملف بذكاء وسرعة
+# الحل السريع: قراءة وعرض صفحة واحدة فقط يختارها المستخدم لمنع التعليق
 if pdf_file is not None:
     try:
         reader = pypdf.PdfReader(pdf_file)
         total_pages = len(reader.pages)
         
-        st.success(f"✅ {source_info} | عدد الصفحات الإجمالي في الملف: {total_pages}")
+        st.success(f"✅ {source_info} | إجمالي عدد الصفحات: {total_pages}")
         
-        # 💡 ميزة الذكاء والسرعة: إذا كان الملف ضخماً جداً، نقرأ أول 50 صفحة فقط لكي لا يعلق الموقع
-        pages_to_read = total_pages
-        if total_pages > 50:
-            st.warning("ℹ️ هذا الملف ضخم جداً! لتسريع التصفح، سيقوم الموقع بقراءة أول 50 صفحة فقط.")
-            pages_to_read = 50
+        st.subheader("📖 تصفح محتوى الملف بسرّعة صاروخية:")
         
-        st.subheader("⏳ جاري معالجة وقراءة الصفحات المحددة:")
-        status_text = st.empty()
-        progress_bar = st.progress(0)
+        # صندوق يختار منه المستخدم رقم الصفحة التي يريد قراءتها
+        page_number = st.number_input(f"أدخل رقم الصفحة التي تريد قراءتها (من 1 إلى {total_pages}):", 
+                                      min_value=1, 
+                                      max_value=total_pages, 
+                                      value=1)
         
-        full_text = ""
-        
-        # حلقة التكرار تقرأ فقط حتى العدد المحدد (pages_to_read)
-        for i in range(pages_to_read):
-            page = reader.pages[i]
-            text = page.extract_text()
-            full_text += f"\n--- الصفحة {i+1} ---\n{text}"
+        # بايثون يقرأ فقط الصفحة المختارة ويستخرج نصها في أجزاء من الثانية!
+        with st.spinner(f"جاري قراءة الصفحة {page_number}..."):
+            # مصفوفات بايثون تبدأ من الصفر، لذا نطرح 1 من رقم الصفحة
+            selected_page = reader.pages[page_number - 1]
+            page_text = selected_page.extract_text()
             
-            current_progress = (i + 1) / pages_to_read
-            percentage = int(current_progress * 100)
+        # عرض نص الصفحة المختارة فقط
+        st.write(f"### 📝 محتوى الصفحة رقم ({page_number})")
+        if page_text.strip():
+            st.text_area(label="محتوى الصفحة", value=page_text, height=350)
+        else:
+            st.info("ℹ️ هذه الصفحة لا تحتوي على نصوص مقروءة (ربما تحتوي على صورة فقط).")
             
-            status_text.text(f"جاري قراءة الصفحة {i+1} من أصل {pages_to_read} ({percentage}%)")
-            progress_bar.progress(current_progress)
-            time.sleep(0.02)
-            
-        status_text.text("✨ تم استخراج النص بنجاح!")
-        progress_bar.empty()
-        
-        st.subheader("📝 محتوى الملف النصي:")
-        st.text_area(label="النص المستخرج", value=full_text, height=500)
-        
     except Exception as e:
-        st.error(f"❌ حدث خطأ أثناء قراءة الملف.")
+        st.error(f"❌ حدث خطأ أثناء معالجة الملف.")
