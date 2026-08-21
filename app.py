@@ -7,8 +7,8 @@ import base64
 # إعدادات الصفحة
 st.set_page_config(page_title="مستعرض ومشارك ملفات PDF", page_icon="📄", layout="wide")
 
-st.title("📄 مستعرض ومشارك ملفات PDF الذكي مع المعاينة")
-st.write("تم تطوير هذا الموقع ليتعامل مع الملفات الضخمة جداً بسرعة صاروخية مع ميزة المعاينة!")
+st.title("📄 مستعرض ومشارك ملفات PDF الذكي")
+st.write("تم إصلاح الخطأ البرمجي! الموقع الآن جاهز لقراءة ومعاينة ملفاتك بسرعة.")
 
 option = st.radio("اختر طريقة إدخال ملف الـ PDF:", ("وضع رابط مباشر للمشاركة مع الـ AI", "رفع ملف من جهازك (للقراءة الشخصية)"))
 
@@ -42,7 +42,7 @@ else:
         source_info = f"تم رفع الملف بنجاح! [{uploaded_file.name}]"
         st.warning("⚠️ تنبيه: الملف المرفوع من جهازك لا يمكن مشاركته برابط مع الـ AI.")
 
-# إذا تم تحميل الملف، نعرض نظام الصفحات مع المعاينة والنص معاً
+# عرض نظام الصفحات والمعاينة بعد إصلاح الكود
 if pdf_file is not None and pdf_bytes is not None:
     try:
         reader = pypdf.PdfReader(pdf_file)
@@ -61,29 +61,25 @@ if pdf_file is not None and pdf_bytes is not None:
             selected_page = reader.pages[page_number - 1]
             page_text = selected_page.extract_text()
             
-        # تقسيم الشاشة إلى عمودين (عمود للمعاينة وعمود للنص المستخرج) ليكون التصميم احترافياً!
+        # تقسيم الشاشة إلى عمودين
         col1, col2 = st.columns(2)
         
         with col1:
             st.write(f"### 🔍 معاينة الصفحة رقم ({page_number})")
             
-            # كود ذكي لإنشاء رابط معاينة سريع ومباشر للملف (يفتح في المتصفح)
+            # تشفير الملف وعرض المعاينة بشكل صحيح وآمن
             base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-            # إضافة سطر التمرير لرقم الصفحة المحددة في المعاينة
             pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}#page={page_number}" width="100%" height="500" type="application/pdf"></iframe>'
             
-            # عرض المعاينة داخل الموقع
-            st.markdown(pdf_display, unsafe_allow_bytes=True, unsafe_allow_html=True)
+            # تم إزالة الأمر الخاطئ هنا ليعمل الموقع بنجاح
+            st.markdown(pdf_display, unsafe_allow_html=True)
             
-            # زر إضافي لفتح الملف كاملاً في صفحة جديدة كـ رابط معاينة خارجي
-            st.link_button("🌐 فتح رابط معاينة كامل للملف في صفحة جديدة", f"data:application/pdf;base64,{base64_pdf}")
-
         with col2:
             st.write(f"### 📝 النص المستخرج من الصفحة ({page_number})")
             if page_text.strip():
-                st.text_area(label="النص المستخرج للنسخ أو للـ AI", value=page_text, height=500)
+                st.text_area(label="النص المستخرج للنسخ أو للـ AI", value=page_text, height=450)
             else:
-                st.info("ℹ️ هذه الصفحة لا تحتوي على نصوص مقروءة (ربما تحتوي على صورة فقط).")
+                st.info("ℹ️ هذه الصفحة لا تحتوي على نصوص مقروءة بوضوح.")
             
     except Exception as e:
-        st.error(f"❌ حدث خطأ أثناء معالجة الملف أو إنشاء المعاينة.")
+        st.error(f"❌ حدث خطأ أثناء معالجة الملف. تأكد من أن الملف غير تالف.")
